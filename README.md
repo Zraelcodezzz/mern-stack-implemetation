@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/1ef2d29e-b9ca-4cee-bede-60d6fe2e202d)# mern-stack-implemetation
+# mern-stack-implemetation
 
 
 In this project, we're going to be implementing a web solution based on the MERN stack.
@@ -376,12 +376,342 @@ Start your server
 **FRONTEND USING REACT**
 
 
-We'll need a user interface for our application  but before we get that done,we'll be testing the endpoints of our RESTful API using POSTMAN
+We'll need a user interface for our application which we're going to be working on right away
+
+  i.  In our Todo directory run
+
+           npm create vite@latest
+
+  ii. Use 'client as name of project' 
 
 
-  1.  In our Todo directory run
+  iii. Then back in the Todo directory,install these dependencies
 
-            npx create-react-app client
+            npm install concurrently --save-dev
+
+   Concurrently is used to run more than one command simultaneously from the same terminal window.  
+
+
+   iv. Then we install nodemon,Nodemon is used to run the server and monitor it as well. If there is any change in the server code, Nodemon will restart it automatically with the new changes.
+
+
+               npm install nodemon --save-dev
+
+   v. Next we're going to update the script in our root  package.json 
+
+
+             {
+              // ...
+             "scripts": {
+             "start": "node index.js",
+             "start-watch": "nodemon index.js",
+             "dev": "concurrently \"npm run start-watch\" \"cd client && npm start\""
+               },
+               // ...
+               }
+
+
+vi.  Now  we update the package.json in our client(frontend)
+
+           {
+             // ...
+             "proxy": "http://localhost:5000"
+             }
+
+  ![image](https://github.com/user-attachments/assets/ea17a239-e343-4a12-9ab4-548f013cb8bd)
+
+
+vii.  Then use....
+
+            npm run dev 
+
+
+   to run our application.      
+
+   ![image](https://github.com/user-attachments/assets/1259215d-27b7-46c3-b504-7e0165511c3e)
+
+vii. Next we're going to be creating components in our client for our react client there will be two components in namely;state and stateleess component.
+     Dive into the client folder and then get into the src folder.
+
+   We then create a folder named components  and further create three files in that folder
+
+          touch Input.jsx  ListTodo.jsx Todo.jsx
+
+
+  vii.  Open Input.jsx then paste the following code
+
+           import React, { Component } from 'react';
+           import axios from 'axios';
+
+           class Input extends Component {
+           state = {
+                      action: '',
+                    };
+
+            addTodo = () => {
+             const task = { action: this.state.action };
+
+              if (task.action && task.action.length > 0) {
+               axios
+               .post('/api/todos', task)
+                .then((res) => {
+                if (res.data) {
+                this.props.getTodos();
+                 this.setState({ action: '' });
+                                                                          }
+                 })
+                .catch((err) => console.log(err));
+                 } else {
+                 console.log('input field required');
+                  }
+                  };
+
+          handleChange = (e) => {
+           this.setState({
+              action: e.target.value,
+             });
+            };
+
+          render() {
+                      let { action } = this.state;
+                      return (
+                      <div>
+                    <input type="text" onChange={this.handleChange} value={action} />
+                    <button onClick={this.addTodo}>add todo</button>
+                   </div>
+                                  );
+                    }
+                   }
+
+                  export default Input;
+                     
+viii. We don't have axios installed in our app yet. Return to client and install axios
+
+              
+                npm install axios
+
+ix.   Now let'navigate   back to components in srfc and work on our ListTodo.jsx file
+
+           import React from 'react';
+
+            const ListTodo = ({ todos = [], deleteTodo }) => {
+            if (!Array.isArray(todos)) {
+                      return <li>No todo(s) left</li>;
+                    }
+
+               return (
+                      <ul>
+                        {todos.length > 0 ? (
+                                        todos.map((todo) => (
+                                                          <li key={todo._id} onClick={() => deleteTodo(todo._id)}>
+                                                            {todo.action}
+                                                          </li>
+                                                        ))
+                                      ) : (
+                                                      <li>No todo(s) left</li>
+                                                    )}
+                      </ul>
+                    );
+                    };
+
+                    export default ListTodo;
+
+
+   ![image](https://github.com/user-attachments/assets/fa1070e6-0e4a-461b-8a2b-3ab96da15bea)
+
+
+   x. Then now our Todo.jsx file
+
+    import React, {Component} from 'react';
+    import axios from 'axios';
+    import Input from './Input';
+    import ListTodo from './ListTodo';
+    class Todo extends Component {
+                state = {
+                            todos: []
+                            }
+                componentDidMount(){
+                            this.getTodos();
+                            }
+                getTodos = () => {
+                            axios.get('/api/todos')
+                            .then(res => {
+                                        if(res.data){
+                                                    this.setState({
+                                                                todos: res.data
+                                                                })
+                                                    }
+                                        })
+                            .catch(err => console.log(err))
+                            }
+                deleteTodo = (id) => {
+                            axios.delete(`/api/todos/${id}`)
+                            .then(res => {
+                                        if(res.data){
+                                                    this.getTodos()
+                                                    }
+                                        })
+                            .catch(err => console.log(err))
+                            }
+                render() {
+                            let { todos } = this.state;
+                            return(
+                                        <div>
+                                        <h1>My Todo(s)</h1>
+
+
+                                        <Input getTodos={this.getTodos}/>
+                                        <ListTodo todos={todos} deleteTodo={this.deleteTodo}/>
+                                        </div>
+                                        )
+                            }
+                }
+    export default Todo;
+
+
+   ![image](https://github.com/user-attachments/assets/392d898d-d312-4911-8abd-43cb2b605db5)
+
+xi.  We'll now delete the react logo page and replace the code with that for our Todo app in App.jsx
+
+         import React from 'react';
+         import Todo from './components/Todo.jsx';
+         import './App.css';
+
+          const App = () => {
+          return (
+                      <div className="App">
+                        <Todo />
+                      </div>
+                    );
+                    };
+
+          export default App;
+
+
+  ![image](https://github.com/user-attachments/assets/ca866f9b-49bf-4133-a4d2-cd4ff7f3dd35)
+
+
+  xii. Next we replace that of our App.css
+
+    .App {
+     text-align: center;
+     font-size: calc(10px + 2vmin);
+      width: 60%;
+       margin-left: auto;
+       margin-right: auto;
+       }
+
+       input {
+       height: 40px;
+          width: 50%;
+            border: none;
+              border-bottom: 2px #101113 solid;
+                background: none;
+                  font-size: 1.5rem;
+                    color: #787a80;
+        }
+
+               input:focus {
+                 outline: none;
+        }
+
+         button {
+                  width: 25%;
+                  height: 45px;
+                  border: none;
+                   margin-left: 10px;
+                     font-size: 25px;
+                    background: #101113;
+                      border-radius: 5px;
+                     color: #787a80;
+                      cursor: pointer;
+            }
+
+                    button:focus {
+                    outline: none;
+           }
+
+                    ul {
+                       list-style: none;
+            text-align: left;
+          padding: 15px;
+           background: #171a1f;
+            border-radius: 5px;
+             }
+
+           li {
+            padding: 15px;
+            font-size: 1.5rem;
+           margin-bottom: 15px;
+            background: #282c34;
+            border-radius: 5px;
+            overflow-wrap: break-word;
+           cursor: pointer;
+              }
+
+             @media only screen and (min-width: 300px) {
+           .App {
+           width: 80%;
+          }
+
+          input {
+           width: 100%
+              }
+
+           button {
+              width: 100%;
+              margin-top: 15px;
+              margin-left: 0;
+                }
+                }
+
+             @media only screen and (min-width: 640px) {
+           .App {
+    width: 60%;
+           }
+
+          input {
+         width: 50%;
+               }
+
+             button {
+              width: 30%;
+              margin-left: 10px;
+              margin-top: 0;
+                }
+               }
+                   
+xiii. Then in our index.css we have...
+
+
+                                       body {
+                margin: 0;
+                    padding: 0;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+                            "Oxygen",
+                                "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+                                    sans-serif;
+                                        -webkit-font-smoothing: antialiased;
+                                            -moz-osx-font-smoothing: grayscale;
+                                                box-sizing: border-box;
+                                                    background-color: #282c34;
+                                                        color: #787a80;
+                                                            }
+                                                                code {
+                                                                            font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+                                                                                monospace;
+                                                                                    }
+
+  Finally, we return to our root directory and run our app to process the chnanges made.
+
+
+
+   ![image](https://github.com/user-attachments/assets/315922f4-51d3-4cc2-9aac-00f08cffb1d1)
+
+
+
+Cheers! We've got our todo app on board.
+
 
 
       
